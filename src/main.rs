@@ -1,7 +1,6 @@
 use core::panic;
-use std::{error::Error, fs, process::Command};
-
 use image::imageops::FilterType;
+use std::{error::Error, fs, process::Command};
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Welcome to MineServe!\n");
