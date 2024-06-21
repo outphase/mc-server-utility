@@ -1,6 +1,8 @@
 use core::panic;
 use std::{error::Error, fs, process::Command};
 
+use image::imageops::FilterType;
+
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Welcome to MineServe!\n");
 
@@ -42,12 +44,42 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
 
     let _ = fs::write("./start-server.bat", bat_file_content).expect("Could not create bat file");
-    run_server_bat().expect("Could not run server");
-    // TODO: Implement Failstate
-    fs::write("./eula.txt", "eula=true").expect("Could not find eula file");
+
     run_server_bat().expect("Could not run server");
 
+    // TODO: Implement Failstate
+    println!("\n Accepting EULA...");
+    fs::write("./eula.txt", "eula=true").expect("Could not find eula file");
+
+    // TODO: Implement autodetection
+    // TODO: Modularize
+    if let Ok(_) = fs::read("./icon.png") {
+        println!("\n Creating icons..,");
+        make_icons();
+    }
+
+    if read_y_n("\n Would you like to run the server?") {
+        run_server_bat().expect("Could not run server");
+    }
+
     Ok(())
+}
+
+fn make_icons() {
+    // TODO: Implement Failstate
+    let image = image::io::Reader::open("./icon.png")
+        .expect("Couldnt load image")
+        .decode()
+        .expect("could not decode image");
+    let server_icon = image::DynamicImage::resize_exact(&image, 64, 64, FilterType::Nearest);
+    server_icon
+        .clone()
+        .save("./server-icon.png")
+        .expect("Could not save");
+    server_icon
+        .clone()
+        .save("./icon.ico")
+        .expect("could not save icon");
 }
 
 fn run_server_bat() -> Result<(), Box<dyn Error>> {
