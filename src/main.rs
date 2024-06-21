@@ -2,12 +2,19 @@ use core::panic;
 use std::{error::Error, fs, process::Command};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("Welcome to MineServe!\nPlease enter a command:");
+    println!("Welcome to MineServe!\n");
 
     if let Err(_e) = fs::read("./server.jar") {
         println!(
             " Please run this in a directory with a server.jar\n\
              - https://www.minecraft.net/en-us/download/server - \n"
+        );
+        return Ok(());
+    }
+    if let Ok(_e) = fs::read("./start-server.bat") {
+        println!(
+            " This program can only be run once.\
+             Please remove all that is not `server.jar` and try again."
         );
         return Ok(());
     }
@@ -35,23 +42,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
 
     let _ = fs::write("./start-server.bat", bat_file_content).expect("Could not create bat file");
+    run_server_bat().expect("Could not run server");
+    // TODO: Implement Failstate
+    fs::write("./eula.txt", "eula=true").expect("Could not find eula file");
+    run_server_bat().expect("Could not run server");
+
+    Ok(())
+}
+
+fn run_server_bat() -> Result<(), Box<dyn Error>> {
     let bat_command = Command::new("./start-server.bat")
         .spawn()
         .expect("Could not run start-server.bat file");
     let output = bat_command.wait_with_output();
-    match output {
-        Ok(output) => {
-            let stderr = String::from_utf8(output.stderr).expect("Could not pars stderr");
-            let stdout = String::from_utf8(output.stdout).expect("Could not parse stdout");
-            println!("{stdout}{stderr}");
-            if output.status.to_string().trim() != "server.jar errored" || !stderr.is_empty() {
-                return Err("Could not run .jar".into());
-            }
-        }
-        Err(e) => {
-            println!("Could not run server.jar");
-            return Err(e.into());
-        }
+    if let Ok(output) = output {
+        let stderr = String::from_utf8(output.stderr).expect("Could not pars stderr");
+        let stdout = String::from_utf8(output.stdout).expect("Could not parse stdout");
+        println!("{stdout}{stderr}");
+        // if output.status.to_string().trim() != "server.jar errored" || !stderr.is_empty() {
+        //     return Err("Could not run .jar".into());
+        // }
     };
 
     Ok(())
