@@ -1,6 +1,8 @@
 # Minecraft Server Setup Utility
 
-This is a simple utility to help you setup a Minecraft server. Just download the `server.jar` file from [minecraft's official website](https://www.minecraft.net/en-us/download/server) and place it in an empty directory. If you wish to add an icon, place any `.png` in the same directory and just run the program.
+This is a simple utility to help you setup a Minecraft server. Just download the `server.jar` file from [Minecraft's official website](https://www.minecraft.net/en-us/download/server) and place it in an empty directory. If you wish to add an icon, place any `.png` in the same directory and just run the program.
+
+To use this optimally, I reccomend adding it to your `Path`;
 
 Note that this will automatically agree to [Minecraft's EULA](https://www.minecraft.net/en-us/eula).
 
