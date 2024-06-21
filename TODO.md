@@ -1,4 +1,4 @@
-- [x] create bat file
+- [ ] create bat file
     - start server
     - accept eula
 - [ ] make server-icon.png
