@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 image = "0.25.1"
+png2ico = { git = "https://github.com/outphase/img2ico"}

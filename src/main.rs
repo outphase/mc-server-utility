@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut max_ram_mb = 4096;
 
     if read_y_n("\n Would you like to specify an amount of dedicated RAM? (y/n)\n Default 4096MB") {
-        // TODO: Implement failstate
+        // HACK: Implement failstate
         min_ram_mb = read_input("\n Please enter the amount of MINIMUM dedicated RAM in MB:")
             .parse()
             .expect("This is not a number");
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     run_server_bat().expect("Could not run server");
 
-    // TODO: Implement Failstate
+    // HACK: Implement Failstate
     println!("\n Accepting EULA...");
     fs::write("./eula.txt", "eula=true").expect("Could not find eula file");
 
@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn make_icons() {
-    // TODO: Implement Failstate
+    // HACK: Implement Failstate
     let image = image::io::Reader::open("./icon.png")
         .expect("Couldnt load image")
         .decode()
@@ -103,7 +103,7 @@ fn read_y_n(say: &str) -> bool {
         "y" | "yes" => true,
         "n" | "no" => false,
         _ => {
-            // TODO: Implement failstate
+            // HACK: Implement failstate
             panic!("Enter y or n");
         }
     }
