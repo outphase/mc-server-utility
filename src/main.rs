@@ -133,7 +133,7 @@ fn make_icon() -> Result<(), Box<dyn Error>> {
 
     server_icon.clone().save(image_name)?;
 
-    println!(" Created server-icon.png and icon.ico in current directory");
+    println!("\n Created server-icon.png and icon.ico in current directory");
     Ok(())
 }
 
@@ -152,14 +152,18 @@ fn run_server_bat() -> Result<(), Box<dyn Error>> {
 }
 
 fn read_y_n(say: &str) -> bool {
-    match read_input(say).to_lowercase().trim() {
-        "y" | "yes" => true,
-        "n" | "no" => false,
-        _ => {
-            // HACK: Implement failstate
-            panic!("Enter y or n");
-        }
+    let mut result: Option<bool> = None;
+    while result.is_none() {
+        match read_input(say).to_lowercase().trim() {
+            "y" | "yes" => result = Some(true),
+            "n" | "no" => result = Some(false),
+            _ => {
+                result = None;
+            }
+        };
     }
+
+    return result.expect("");
 }
 
 fn read_input(say: &str) -> String {
