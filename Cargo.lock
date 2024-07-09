@@ -326,6 +326,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "img2ico"
+version = "0.1.0"
+source = "git+https://github.com/outphase/img2ico#0498b2917c40cca82d9bf1b2897b10ef5921e73d"
+dependencies = [
+ "image",
+]
+
+[[package]]
 name = "imgref"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -439,6 +447,7 @@ name = "mc-server-utility"
 version = "0.1.0"
 dependencies = [
  "image",
+ "img2ico",
 ]
 
 [[package]]
