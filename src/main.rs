@@ -1,21 +1,52 @@
 use core::panic;
-use image::imageops::FilterType;
-use std::{error::Error, fs, process::Command};
+use std::{
+    env,
+    error::Error,
+    fs,
+    process::{self, Command},
+};
+
+const HELP_MESSAGE: &str = "
+ Run this program in a directory with a `server.jar` and optionally an
+ icon.png to set up a Minecraft Server.
+
+ You can find the .jar file here:
+ -> https://www.minecraft.net/en-us/download/server
+
+ It is reccomended that the icon.png file is square as to not distort
+ when making the server icon.
+
+ For more info, visit this project's github page:
+ -> https://github.com/outphase/mc-server-utility
+";
 
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("Welcome to MineServe!\n");
+    println!("\n Welcome to MC Server Setup!");
+
+    let args: Vec<String> = env::args().collect();
+    if let Some(arg) = args.get(1) {
+        match arg.to_lowercase().trim() {
+            "--help" => {
+                println!("{HELP_MESSAGE}");
+            }
+            _ => println!(
+                " Unknown argument '{arg}', run 'mc-server-setup --help' for usage information"
+            ),
+        }
+        return Ok(());
+    }
 
     if let Err(_e) = fs::read("./server.jar") {
-        println!(
-            " Please run this in a directory with a server.jar\n\
-             - https://www.minecraft.net/en-us/download/server - \n"
-        );
+        println!("{HELP_MESSAGE}");
         return Ok(());
     }
     if let Ok(_e) = fs::read("./start-server.bat") {
         println!(
-            " This program can only be run once.\
-             Please remove all that is not `server.jar` and try again."
+            "
+ This program can only be run once.
+ If you wish to run this again, please remove everything 
+ that is not `server.jar` and an eventual icon.png and try again.
+"
         );
         return Ok(());
     }
@@ -42,43 +73,31 @@ fn main() -> Result<(), Box<dyn Error>> {
         min_ram_mb, max_ram_mb
     );
 
-    let _ = fs::write("./start-server.bat", bat_file_content).expect("Could not create bat file");
+    let _ = fs::write("./start-server.bat", bat_file_content).unwrap_or_else(|e| {
+        eprintln!(" Could not create .bat file: {e}");
+        process::exit(1);
+    });
 
-    run_server_bat().expect("Could not run server");
+    run_server_bat().unwrap_or_else(|e| {
+        eprintln!(" Could not start server: {e}");
+        process::exit(1);
+    });
 
-    // HACK: Implement Failstate
     println!("\n Accepting EULA...");
-    fs::write("./eula.txt", "eula=true").expect("Could not find eula file");
+    fs::write("./eula.txt", "eula=true").unwrap_or_else(|e| {
+        eprintln!(" Could not confirm EULA: {e}");
+        process::exit(1);
+    });
 
-    // TODO: Implement autodetection
-    // TODO: Modularize
-    if let Ok(_) = fs::read("./icon.png") {
-        println!("\n Creating icons..,");
-        make_icons();
+    if let Err(e) = img2ico::convert_image("icon.png") {
+        eprintln!("\n Error creating icon: {e}");
     }
 
-    if read_y_n("\n Would you like to run the server?") {
+    if read_y_n("\n Would you like to run the server? (y/n)") {
         run_server_bat().expect("Could not run server");
     }
 
     Ok(())
-}
-
-fn make_icons() {
-    // HACK: Implement Failstate
-    let image = image::io::Reader::open("./icon.png")
-        .expect("Couldnt load image")
-        .decode()
-        .expect("could not decode image");
-    let server_icon = image::DynamicImage::resize_exact(&image, 64, 64, FilterType::Nearest);
-    server_icon
-        .clone()
-        .save("./server-icon.png")
-        .expect("Could not save");
-    server_icon
-        .clone()
-        .save("./icon.ico")
-        .expect("could not save icon");
 }
 
 fn run_server_bat() -> Result<(), Box<dyn Error>> {
@@ -90,9 +109,6 @@ fn run_server_bat() -> Result<(), Box<dyn Error>> {
         let stderr = String::from_utf8(output.stderr).expect("Could not pars stderr");
         let stdout = String::from_utf8(output.stdout).expect("Could not parse stdout");
         println!("{stdout}{stderr}");
-        // if output.status.to_string().trim() != "server.jar errored" || !stderr.is_empty() {
-        //     return Err("Could not run .jar".into());
-        // }
     };
 
     Ok(())
