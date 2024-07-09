@@ -1,8 +1,3 @@
-- [x] create bat file
-    - start server
-    - accept eula
-- [x] make server-icon.png
-- [x] make icon.ico
 - [ ] make .lnk
     - opt: copy link to desktop
     - WAITING FOR "lnk" LIBRARY UPDATE

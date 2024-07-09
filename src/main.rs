@@ -6,6 +6,8 @@ use std::{
     process::{self, Command},
 };
 
+use image::imageops::FilterType;
+
 const HELP_MESSAGE: &str = "
  Run this program in a directory with a `server.jar` and optionally an
  icon.png to set up a Minecraft Server.
@@ -15,6 +17,9 @@ const HELP_MESSAGE: &str = "
 
  It is reccomended that the icon.png file is square as to not distort
  when making the server icon.
+
+ Run the program with --icon if you already have a server setup to
+ make an icon, provided the right icon.png file.
 
  For more info, visit this project's github page:
  -> https://github.com/outphase/mc-server-utility
@@ -28,6 +33,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         match arg.to_lowercase().trim() {
             "--help" => {
                 println!("{HELP_MESSAGE}");
+            }
+            "--icon" => {
+                if let Err(_) = make_icon() {
+                    println!("\n Could not create icon\n Please provide an 'icon.png' file to set an icon");
+                    // eprintln!(" Error creating icon: {e}");
+                }
             }
             _ => println!(
                 " Unknown argument '{arg}', run 'mc-server-setup --help' for usage information"
@@ -51,26 +62,34 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    let mut min_ram_mb = 4096;
-    let mut max_ram_mb = 4096;
+    let mut min_ram_mb = Ok(4096);
+    let mut max_ram_mb = Ok(4096);
 
     if read_y_n("\n Would you like to specify an amount of dedicated RAM? (y/n)\n Default 4096MB") {
-        // HACK: Implement failstate
-        min_ram_mb = read_input("\n Please enter the amount of MINIMUM dedicated RAM in MB:")
-            .parse()
-            .expect("This is not a number");
-        max_ram_mb = if read_y_n("\n Keep max RAM the same as min RAM? (y/n)") {
-            min_ram_mb
+        min_ram_mb =
+            read_input("\n Please enter the amount of MINIMUM dedicated RAM in MB:").parse();
+        while let Err(_) = min_ram_mb {
+            min_ram_mb = read_input(" Please enter a valid number").parse();
+        }
+
+        max_ram_mb = if read_y_n("\n Keep maximum RAM the same as min RAM? (y/n)") {
+            min_ram_mb.clone()
         } else {
-            read_input("\n Please enter the amount of MAXIMUM dedicated RAM in MB:")
-                .parse()
-                .expect("This is not a number")
+            let mut result;
+            result =
+                read_input("\n Please enter the amount of MAXIMUM dedicated RAM in MB:").parse();
+            // TODO: Should warn when min > max
+            while let Err(_) = result {
+                result = read_input(" Please enter a valid number:").parse();
+            }
+            result
         };
     }
 
     let bat_file_content = format!(
         "java -Xmx{}M -Xms{}M -jar server.jar nogui",
-        min_ram_mb, max_ram_mb
+        min_ram_mb.expect("Should be a number by now"),
+        max_ram_mb.expect("Should be a number by now")
     );
 
     let _ = fs::write("./start-server.bat", bat_file_content).unwrap_or_else(|e| {
@@ -89,14 +108,32 @@ fn main() -> Result<(), Box<dyn Error>> {
         process::exit(1);
     });
 
-    if let Err(e) = img2ico::convert_image("icon.png") {
-        eprintln!("\n Error creating icon: {e}");
+    if let Err(_) = make_icon() {
+        println!(
+            "
+ Could not add an icon to your server.
+ if you wish to add an icon, please provide an 'icon.png' file!
+"
+        );
     }
 
     if read_y_n("\n Would you like to run the server? (y/n)") {
         run_server_bat().expect("Could not run server");
     }
 
+    Ok(())
+}
+
+fn make_icon() -> Result<(), Box<dyn Error>> {
+    let image_name = "icon.png";
+    img2ico::convert_image(image_name)?;
+    let image = image::io::Reader::open(image_name)?.decode()?;
+    let server_icon = image::DynamicImage::resize_exact(&image, 64, 64, FilterType::Nearest);
+    let image_name = "server-icon.png";
+
+    server_icon.clone().save(image_name)?;
+
+    println!(" Created server-icon.png and icon.ico in current directory");
     Ok(())
 }
 
